@@ -1,0 +1,14 @@
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/ERD/Address.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/ERD/City.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Window/AppointmentSpecificsViewController.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Window/CalendarViewController.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Window/CustomerRecordViewController.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/ERD/Appointment.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Window/PostLoginWindowController.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Main.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Window/MainWindowController.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/ERD/Customer.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/ERD/Country.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/ERD/User.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Backend/DatabaseConnector.java
+/Users/gaijin/Desktop/AppointmentManager/src/main/java/com/github/gaijinkindred/AppointmentManager/Window/AppointmentsViewController.java
