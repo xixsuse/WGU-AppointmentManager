@@ -75,9 +75,21 @@ public class Main extends Application {
         alert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
         alert.setTitle(title);
         alert.setContentText(message);
+        //This lambda saves about 3 lines of code, but the usefulness of this is about a 7/10 given its placement and
+        //  purpose. Generally, I don't really like lambdas but this is simple enough and doesn't cause any threading
+        //  issues so I'm happy enough with it.
         alert.showAndWait().filter(response -> response == ButtonType.OK).ifPresent(response -> {
             LOGGERINSTANCE.log(Logger.LoggingLevel.EXCEPTION, message);
         });
+    }
+
+    public static void newAlert(String alertTitle, String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+        alert.setTitle(alertTitle);
+        alert.setContentText(message);
+        alert.showAndWait();
+        LOGGERINSTANCE.log(Logger.LoggingLevel.LOG, message);
     }
 
     public static void main(String[] args) {

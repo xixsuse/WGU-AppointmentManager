@@ -37,11 +37,36 @@ public class AppointmentsViewController implements Initializable {
         } else {
             Main.newChildStage("AppointmentSpecificsView.fxml", "Add Appointment");
         }
+        if(selectedAppointment != null) {
+            Appointment sa = selectedAppointment;
+            Customer cust = ERDController.getInstance().getCustomer(sa.getCustomerId());
+            long length = (sa.getEndDate().getTime() - sa.getStartDate().getTime()) / (1000 * 60);
+            FormattedAppointment f = new FormattedAppointment(sa.getUserId(), sa.getAppointmentId(),
+                    sa.getType(), cust.getCustomerName(), length + " minutes",
+                    sa.getStartDate().toString());
+            fa.add(f);
+        }
+        tableView.requestFocus();
+        tableView.refresh();
     }
 
     @FXML
     private void updateAppointment(ActionEvent event) {
-        selectedAppointment = ERDController.getInstance().getAppointments().get(tableView.getSelectionModel().getSelectedIndex());
+        if(tableView.getSelectionModel().getSelectedIndex() < 0) {
+            if(Main.langIdent == LanguageIdentifier.FRENCH) {
+                Main.newError("Aucun rendez-vous sélectionné", "Vous devez sélectionner un rendez-vous " +
+                        "à modifier avant d'essayer de modifier un rendez-vous");
+            } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
+                Main.newError("Ninguna cita seleccionada", "Debe seleccionar una cita para modificar " +
+                        "antes de intentar modificar una cita");
+            } else {
+                Main.newError("No Appointment Selected", "You need to select an appointment to modify " +
+                        "before attempting to modify an appointment");
+            }
+            return;
+        }
+        FormattedAppointment fas = (FormattedAppointment)(tableView.getSelectionModel().getSelectedItem());
+        selectedAppointment = ERDController.getInstance().getAppointment(fas.getAppointmentId());
         if(Main.langIdent == LanguageIdentifier.FRENCH) {
             Main.newChildStage("AppointmentSpecificsView.fxml", "Modifier un rendez-vous");
         } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
@@ -49,6 +74,15 @@ public class AppointmentsViewController implements Initializable {
         } else {
             Main.newChildStage("AppointmentSpecificsView.fxml", "Modify Appointment");
         }
+        Appointment sa = selectedAppointment;
+        long length = (sa.getEndDate().getTime() - sa.getStartDate().getTime()) / (1000 * 60);
+        fas.setType(sa.getType());
+        fas.setLength(length + " minutes");
+        fas.setTime(sa.getStartDate().toString() + " minutes");
+        Customer cust = ERDController.getInstance().getCustomer(sa.getCustomerId());
+        fas.setCustomerName(cust.getCustomerName());
+        tableView.requestFocus();
+        tableView.refresh();
     }
 
     @FXML
@@ -62,12 +96,25 @@ public class AppointmentsViewController implements Initializable {
         } else {
             alert.setContentText("Are you sure you would like to delete this appointment?");
         }
-        alert.showAndWait().filter(response -> response == ButtonType.YES).ifPresent(response -> { //Lambda here
-            Appointment app = ERDController.getInstance().getAppointments().get(tableView.getSelectionModel().getSelectedIndex());
+        //Similar to the Lambda in Main.java, but this one will check if the user selects yes then handle removing an
+        //  appointment from the view. This saves quite a few more lines of code than Main.java with a similar lambda.
+        //  Usefulness; 9/10.
+        alert.showAndWait().filter(response -> response == ButtonType.YES).ifPresent(response -> {
+            FormattedAppointment fApp = (FormattedAppointment)(tableView.getSelectionModel().getSelectedItem());
+            Appointment app = ERDController.getInstance().getAppointment(fApp.getAppointmentId());
             ERDController.getInstance().deleteAppointment(app.getAppointmentId());
+            for(int i = 0; i < fa.size(); i++) {
+                if(fa.get(i).getAppointmentId() == app.getAppointmentId()) {
+                    fa.remove(i);
+                    break;
+                }
+            }
+            tableView.requestFocus();
             tableView.refresh();
         });
     }
+
+    private ArrayList<FormattedAppointment> fa = new ArrayList<FormattedAppointment>();
 
     public void initialize(URL location, ResourceBundle resources) {
         Main.LOGGERINSTANCE.log(Logger.LoggingLevel.LOG, "Loading Appointments View");
@@ -82,11 +129,8 @@ public class AppointmentsViewController implements Initializable {
         }
 
         ArrayList<Appointment> appointments = ERDController.getInstance().getAppointments();
-        ArrayList<FormattedAppointment> fa = new ArrayList<FormattedAppointment>();
         for(Appointment a : appointments) {
-            System.out.println(a.getUserId());
             Customer c = ERDController.getInstance().getCustomer(a.getCustomerId());
-            System.out.println(c == null);
             String customerName = c.getCustomerName();
             long length = ((a.getEndDate().getTime() - a.getStartDate().getTime())/1000)/60;
             length = length - (length % 1);
@@ -95,10 +139,10 @@ public class AppointmentsViewController implements Initializable {
         }
 
         tableView.setItems(FXCollections.observableList(fa));
-        ((TableColumn)(tableView.getColumns().get(0))).setCellValueFactory(new PropertyValueFactory<Appointment, String>("type"));
-        ((TableColumn)(tableView.getColumns().get(1))).setCellValueFactory(new PropertyValueFactory<Appointment, String>("customerName"));
-        ((TableColumn)(tableView.getColumns().get(2))).setCellValueFactory(new PropertyValueFactory<Appointment, String>("length"));
-        ((TableColumn)(tableView.getColumns().get(3))).setCellValueFactory(new PropertyValueFactory<Appointment, String>("time"));
+        ((TableColumn)(tableView.getColumns().get(0))).setCellValueFactory(new PropertyValueFactory<FormattedAppointment, String>("type"));
+        ((TableColumn)(tableView.getColumns().get(1))).setCellValueFactory(new PropertyValueFactory<FormattedAppointment, String>("customerName"));
+        ((TableColumn)(tableView.getColumns().get(2))).setCellValueFactory(new PropertyValueFactory<FormattedAppointment, String>("length"));
+        ((TableColumn)(tableView.getColumns().get(3))).setCellValueFactory(new PropertyValueFactory<FormattedAppointment, String>("time"));
         Main.LOGGERINSTANCE.log(Logger.LoggingLevel.LOG, "Loaded Appointments View");
     }
 }

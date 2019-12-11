@@ -1,9 +1,5 @@
-Sat Dec 07 11:51:18 PST 2019 >> [LOG]: Opened MainWindowController
-Sat Dec 07 11:51:18 PST 2019 >> [LOG]: Loaded MainWindowController
-Sat Dec 07 11:51:24 PST 2019 >> [LOG]: Attempting Login
-Sat Dec 07 11:51:28 PST 2019 >> [LOG, user:test]: Logged in.
-Sat Dec 07 11:51:28 PST 2019 >> [LOG, user:test]: Created Window: AppointmentsView.fxml, with title: Appointments
-Sat Dec 07 11:51:28 PST 2019 >> [LOG, user:test]: Loading Appointments View
-Sat Dec 07 11:51:28 PST 2019 >> [LOG, user:test]: Loaded Appointments View
-Sat Dec 07 11:51:32 PST 2019 >> [LOG, user:test]: Created Window: AppointmentSpecificsView.fxml, with title: Modify Appointment
-Sat Dec 07 11:51:36 PST 2019 >> [LOG, user:test]: Created Window: AppointmentSpecificsView.fxml, with title: Modify Appointment
+Tue Dec 10 08:54:50 PST 2019 >> [LOG]: Opened MainWindowController
+Tue Dec 10 08:54:50 PST 2019 >> [LOG]: Loaded MainWindowController
+Tue Dec 10 08:54:53 PST 2019 >> [LOG]: Attempting Login
+Tue Dec 10 08:54:59 PST 2019 >> [LOG]: Upcoming appointment at 2019-12-10 09:00:00.0 with title: Performance Review I.
+Tue Dec 10 08:54:59 PST 2019 >> [LOG, user:test]: Logged in.

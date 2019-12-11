@@ -139,4 +139,12 @@ public class Appointment {
     public void setLastUpdateBy(String lastUpdateBy) {
         this.lastUpdateBy = lastUpdateBy;
     }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }

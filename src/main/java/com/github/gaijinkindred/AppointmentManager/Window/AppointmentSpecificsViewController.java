@@ -21,6 +21,7 @@ import java.net.URL;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -65,9 +66,15 @@ public class AppointmentSpecificsViewController implements Initializable {
                 Calendar cal = Calendar.getInstance();
                 java.util.Date date = Date.from(Instant.from(datePicker.getValue().atStartOfDay(ZoneId.systemDefault())));
                 cal.setTime(date);
-                cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE), Integer.parseInt(selectStartTime.getText().split(":")[0]), Integer.parseInt(selectStartTime.getText().split(":")[1]));
+                if(AppointmentsViewController.selectedAppointment != null && selectStartTime.getText().contains(" "))
+                    cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE), Integer.parseInt(selectStartTime.getText().split(" ")[1].split(":")[0]), Integer.parseInt(selectStartTime.getText().split(" ")[1].split(":")[1]));
+                else
+                    cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE), Integer.parseInt(selectStartTime.getText().split(":")[0]), Integer.parseInt(selectStartTime.getText().split(":")[1]));
                 start = new Timestamp(cal.getTime().getTime());
-                cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE), Integer.parseInt(selectEndTime.getText().split(":")[0]), Integer.parseInt(selectEndTime.getText().split(":")[1]));
+                if(AppointmentsViewController.selectedAppointment != null && selectEndTime.getText().contains(" "))
+                    cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE), Integer.parseInt(selectEndTime.getText().split(" ")[1].split(":")[0]), Integer.parseInt(selectEndTime.getText().split(" ")[1].split(":")[1]));
+                else
+                    cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE), Integer.parseInt(selectEndTime.getText().split(":")[0]), Integer.parseInt(selectEndTime.getText().split(":")[1]));
                 end = new Timestamp(cal.getTime().getTime());
             } else {
                 //error out
@@ -81,9 +88,12 @@ public class AppointmentSpecificsViewController implements Initializable {
                 return;
             }
             for(Appointment a : ERDController.getInstance().getAppointments()) {
-                if(a.getStartDate().getTime() == start.getTime() && a.getLocation() == Main.lmbIdent.toString()) {
+                if((a.getStartDate().getTime() >= start.getTime() && a.getLocation().equalsIgnoreCase(Main.lmbIdent.toString()))
+                        || (a.getStartDate().getTime() <= start.getTime() && a.getEndDate().getTime() >= start.getTime())
+                        || (a.getStartDate().getTime() <= end.getTime() && a.getEndDate().getTime() >= end.getTime())) {
                     if(Main.langIdent == LanguageIdentifier.FRENCH) {
-                        Main.newError("Rendez-vous Préexistant", "Rendez-vous préablable trouvé, impossible d'en ajouter un autre!");
+                        Main.newError("Rendez-vous Préexistant", "Rendez-vous préablable trouvé, " +
+                                "impossible d'en ajouter un autre!");
                     } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
                         Main.newError("Cita Previa!", "Cita previa encontrada, no se puede agregar otra!");
                     } else {
@@ -94,9 +104,9 @@ public class AppointmentSpecificsViewController implements Initializable {
             }
             Date create = new Date(System.currentTimeMillis());
             String createdBy;
-            if(Main.user != null)
+            if(Main.user != null) {
                 createdBy = Main.user.userName;
-            else {
+            } else {
                 //error out
                 if(Main.langIdent == LanguageIdentifier.FRENCH) {
                     Main.newError("Erreur de Soumission", "Impossible de trouver l'utilisateur connecté.");
@@ -107,9 +117,71 @@ public class AppointmentSpecificsViewController implements Initializable {
                 }
                 return;
             }
+            long hour = 1000 * 60 * 60;
+            long day = hour * 24;
+            String hourStr = selectStartTime.getText();
+            long tod = 0;
+            if(hourStr.indexOf(" ") > 0) {
+                tod = (Integer.parseInt(hourStr.split(" ")[1].split(":")[0]) * hour)
+                    + (Integer.parseInt(hourStr.split(" " )[1].split(":")[1]) * 1000 * 60);
+            } else {
+                tod = (Integer.parseInt(hourStr.split(":")[0]) * hour)
+                        + (Integer.parseInt(hourStr.split(":")[1]) * 1000 * 60);
+            }
+
+            long toe = 0;
+            hourStr = selectEndTime.getText();
+            if(hourStr.indexOf(" ") > 0) {
+                toe = (Integer.parseInt(hourStr.split(" ")[1].split(":")[0]) * hour)
+                        + (Integer.parseInt(hourStr.split(" " )[1].split(":")[1]) * 1000 * 60);
+            } else {
+                toe = (Integer.parseInt(hourStr.split(":")[0]) * hour)
+                        + (Integer.parseInt(hourStr.split(":")[1]) * 1000 * 60);
+            }
+
+            if(tod < hour * 9 || tod > hour * 17 || toe < hour * 9 || toe % day > hour * 17) {
+                if(Main.langIdent == LanguageIdentifier.FRENCH) {
+                    Main.newError("En dehors des heures d'ouverture", "Vous essayez de planifier un" +
+                            " rendez-vous en dehors de heures d'ouverture de 9h00 a 17h00. Veuillez reessayer.");
+                } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
+                    Main.newError("", "Esta tratando de programar una cita fuera del horario comercial " +
+                            "de 9:00 a 17:00. Por favor intente eso de nuevo.");
+                } else {
+                    Main.newError("Outside of Business Hours", "You are trying to schedule an " +
+                            "appointment outside of business hours of 9am to 5pm. Please try that again.");
+                }
+                return;
+            }
+
+            Appointment app = null;
+            for(Appointment a : ERDController.getInstance().getAppointments()) {
+                if(start.getTime() <= a.getStartDate().getTime() && end.getTime() >= a.getStartDate().getTime()) {
+                    app = a;
+                    break;
+                }
+            }
+            if(app != null) {
+                if(Main.langIdent == LanguageIdentifier.FRENCH)
+                    Main.newError("Rendez-vous qui se chevauchent", "Vous essayez de planifier des " +
+                            "rendez-vous qui se chevauchent à" + app.getStartDate().toString() + ".");
+                else if(Main.langIdent == LanguageIdentifier.SPANISH)
+                    Main.newError("Citas superpuestas", "Está intentando programar citas superpuestas" +
+                            " en " + app.getStartDate().toString() + ".");
+                else //English
+                    Main.newError("Overlapping Appointments", "You are trying to schedule overlapping" +
+                            " appointments at " + app.getStartDate().toString() + ".");
+                return;
+            }
+
             Timestamp last = new Timestamp(System.currentTimeMillis());
-            Appointment appointment = ERDController.getInstance().newAppointment(cusId, usrId, title, desc, loc, cont, type, url,
-                    start, end, create, createdBy, last, createdBy);
+            if(AppointmentsViewController.selectedAppointment != null) {
+                ERDController.getInstance().updateAppointment(AppointmentsViewController.selectedAppointment, cusId,
+                        usrId, title, desc, loc, type, start, end, last, createdBy);
+            } else {
+                Appointment appointment = ERDController.getInstance().newAppointment(cusId, usrId, title, desc, loc,
+                        cont, type, url, start, end, create, createdBy, last, createdBy);
+                AppointmentsViewController.selectedAppointment = appointment;
+            }
         } else {
             //error
             if(Main.langIdent == LanguageIdentifier.FRENCH) {
@@ -164,8 +236,16 @@ public class AppointmentSpecificsViewController implements Initializable {
             selectCustomerButton.setText(ERDController.getInstance().getCustomer(appo.getCustomerId()).getCustomerName());
             selectStartTime.setText(appo.getStartDate().toString());
             selectEndTime.setText(appo.getEndDate().toString());
+            Appointment sa = AppointmentsViewController.selectedAppointment;
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(new Date(sa.getStartDate().getTime()));
+            datePicker.setValue(LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)));
+            CustomerSelectionView.customer = ERDController.getInstance().getCustomer(appo.getCustomerId());
         }
 
+        //Business Hours were not specified, assuming 6am to 10pm since that should cover the majority of the range.
+        //  Best-case Exception Control: Don't even let the user enter an invalid time outside of business hours for
+        //  that location.
         int hours = 6;
         for(int i = 0; i < 32; i++) {
             if(i % 2 == 0 && i > 0)

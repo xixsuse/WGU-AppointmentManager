@@ -2,12 +2,8 @@ package com.github.gaijinkindred.AppointmentManager.Window;
 
 import com.github.gaijinkindred.AppointmentManager.Backend.ERDController;
 import com.github.gaijinkindred.AppointmentManager.Backend.LanguageIdentifier;
-import com.github.gaijinkindred.AppointmentManager.ERD.Address;
-import com.github.gaijinkindred.AppointmentManager.ERD.City;
-import com.github.gaijinkindred.AppointmentManager.ERD.Country;
-import com.github.gaijinkindred.AppointmentManager.ERD.Customer;
+import com.github.gaijinkindred.AppointmentManager.ERD.*;
 import com.github.gaijinkindred.AppointmentManager.Main;
-import com.sun.tools.internal.xjc.Language;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -17,6 +13,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import java.net.URL;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.ResourceBundle;
 
 public class CustomerSpecificsViewController implements Initializable {
@@ -41,9 +38,46 @@ public class CustomerSpecificsViewController implements Initializable {
     private void submitButtonAction(ActionEvent ae) {
         java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
         Timestamp ts = new Timestamp(date.getTime());
+        String addrStr = addressField.getText();
+        String city = cityField.getText();
+        String ctry = countryField.getText();
+        String post = postalField.getText();
+        String numb = phoneNumberField.getText();
+        User usr = Main.user;
+
+        if(addrStr == null || addrStr.length() < 1 || city.length() < 1
+                || ctry.length() < 1 || post.length() < 1 || numb.length() < 1) {
+            if(Main.langIdent == LanguageIdentifier.FRENCH) {
+                Main.newError("Ne peut être vide", "Les détails du client ne peuvent pas être vides");
+            } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
+                Main.newError("No puede estar en blanco", "Las especificaciones del cliente no pueden" +
+                        " en blanco.");
+            } else {
+                Main.newError("Cannot be blank", "Customer specifics cannot be blank.");
+            }
+            return;
+        }
+
         if(CustomerSelectionView.customer == null) {
-            Address addr = ERDController.getInstance().newAddress(addressField.getText(), "", cityField.getText(), countryField.getText(), postalField.getText(), phoneNumberField.getText(), date, Main.user.userName, ts, Main.user.userName);
-            ERDController.getInstance().newCustomer(nameField.getText(), addr.getAddressId(), 1, date, Main.user.userName, ts, Main.user.userName);
+            Address addr = ERDController.getInstance().newAddress(addrStr, "", city, ctry, post, numb, date, usr.userName, ts, usr.userName);
+            CustomerSelectionView.customer = ERDController.getInstance().newCustomer(nameField.getText(), addr.getAddressId(), 1, date, usr.userName, ts, usr.userName);
+        } else {
+            Address addr = null;
+            for(Address a : ERDController.getInstance().getAddresses()) {
+                if(a.getAddressId() == CustomerSelectionView.customer.getAddressId()) {
+                    addr = a;
+                    break;
+                }
+            }
+            long time = Calendar.getInstance().getTime().getTime();
+            if(addr == null) {
+                addr = ERDController.getInstance().newAddress(addrStr, "", city, ctry, post, numb,
+                        new Date(time), usr.userName, new Timestamp(time), usr.userName);
+            }
+            City c = ERDController.getInstance().getCity(addr.getCityId());
+            if(c.getCity().equalsIgnoreCase(city))
+                ERDController.getInstance().updateAddress(addr, addrStr, addr.getCityId(), numb, new Timestamp(time), usr.userName);
+            ERDController.getInstance().updateCustomer(CustomerSelectionView.customer, nameField.getText(), addr.getAddressId(), 1, new Timestamp(time), usr.userName);
         }
         Main.dismissRecentStage();
     }

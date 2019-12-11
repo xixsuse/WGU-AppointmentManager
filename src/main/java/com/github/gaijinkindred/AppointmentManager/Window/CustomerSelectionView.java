@@ -7,6 +7,7 @@ import com.github.gaijinkindred.AppointmentManager.ERD.Address;
 import com.github.gaijinkindred.AppointmentManager.ERD.Customer;
 import com.github.gaijinkindred.AppointmentManager.Main;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -41,6 +42,7 @@ public class CustomerSelectionView implements Initializable {
 
     @FXML private void addCustomer(ActionEvent event) {
         customer = null;
+        ArrayList<Customer> cs = ERDController.getInstance().getCustomers(); //This might duplicate ths list, I'm not sure
         if(Main.langIdent == LanguageIdentifier.FRENCH) {
             Main.newChildStage("CustomerSpecificsView.fxml","Ajouter des données Client");
         } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
@@ -48,6 +50,13 @@ public class CustomerSelectionView implements Initializable {
         } else {
             Main.newChildStage("CustomerSpecificsView.fxml", "Add Customer Data");
         }
+        if(customer != null) {
+            Address addr = ERDController.getInstance().getAddress(customer.getAddressId());
+            FormattedCustomer fc = new FormattedCustomer(customer.getCustomerName(), addr.getAddress(),
+                    addr.getPhoneNumber(), customer.getCustomerId(), addr.getAddressId());
+            tableView.getItems().add(fc);
+        }
+        tableView.requestFocus();
         tableView.refresh();
     }
 
@@ -58,28 +67,48 @@ public class CustomerSelectionView implements Initializable {
         alert.showAndWait().filter(response -> response == ButtonType.OK).ifPresent(response -> { //Lambda #2, does something other than what Main.newError does..
             Customer customer = ERDController.getInstance().getCustomers().get(tableView.getSelectionModel().getSelectedIndex());
             ERDController.getInstance().deleteCustomer(customer.getCustomerId());
+            ObservableList<FormattedCustomer> fcs = tableView.getItems();
+            for(FormattedCustomer fc : fcs) {
+                if(fc.getCustomerId() == customer.getCustomerId()) {
+                    fcs.remove(fc);
+                    break;
+                }
+            }
         });
+        tableView.requestFocus();
         tableView.refresh();
     }
 
     @FXML
     private void modifyCustomer(ActionEvent event) {
-        FormattedCustomer fc = (FormattedCustomer)(tableView.getSelectionModel().getSelectedItem());
-        customer = ERDController.getInstance().getCustomer(fc.customerId);
-        if(Main.langIdent == LanguageIdentifier.FRENCH) {
-            Main.newChildStage("CustomerSpecificsView.fxml", "Modifier les données client");
-        } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
-            Main.newChildStage("CustomerSpecificsView.fxml", "Modificar datos del Cliente");
+        if(tableView.getSelectionModel().getSelectedIndex() > -1) {
+            FormattedCustomer fc = formattedCustomers.get(tableView.getSelectionModel().getSelectedIndex());
+            customer = ERDController.getInstance().getCustomer(fc.customerId);
+            if (Main.langIdent == LanguageIdentifier.FRENCH) {
+                Main.newChildStage("CustomerSpecificsView.fxml", "Modifier les données client");
+            } else if (Main.langIdent == LanguageIdentifier.SPANISH) {
+                Main.newChildStage("CustomerSpecificsView.fxml", "Modificar datos del Cliente");
+            } else {
+                Main.newChildStage("CustomerSpecificsView.fxml", "Modify Customer Data");
+            }
         } else {
-            Main.newChildStage("CustomerSpecificsView.fxml", "Modify Customer Data");
+            if(Main.langIdent == LanguageIdentifier.FRENCH) {
+                Main.newError("Aucun client sélectionné", "Aucun client sélectionné pour modifier. Veuillez en sélectionner un et réessayer.");
+            } else if(Main.langIdent == LanguageIdentifier.SPANISH) {
+                Main.newError("Ningún cliente seleccionado", "Ningún cliente seleccionado para modificar. Seleccione uno e intente nuevamente.");
+            } else {
+                Main.newError("No Customer Selected", "No customer selected to modify. Please select one and try again.");
+            }
         }
+        tableView.requestFocus();
         tableView.refresh();
     }
+
+    private ArrayList<FormattedCustomer> formattedCustomers = new ArrayList<FormattedCustomer>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         ArrayList<Customer> customers = ERDController.getInstance().getCustomers();
-        ArrayList<FormattedCustomer> formattedCustomers = new ArrayList<FormattedCustomer>();
         for(Customer c : customers) {
             if(c.getAddressId() != -1) {
                 Address addr = ERDController.getInstance().getAddress(c.getAddressId());
